@@ -12,6 +12,6 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion)
 
 libraryDependencies ++= Seq(
-  "io.symphonia" % "lambda-logging" % "1.0.1" % "provided",
+  "org.slf4j" % "slf4j-api" % "1.7.25",
   "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
 )
