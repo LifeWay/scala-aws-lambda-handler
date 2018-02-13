@@ -3,17 +3,17 @@ package com.lifeway.aws.lambda
 import io.circe.{Decoder, Encoder}
 
 case class RequestContextIdentity(
-    cognitoIdentityPoolId: Option[String] = None,
-    accountId: Option[String] = None,
-    cognitoIdentityId: Option[String] = None,
-    caller: Option[String] = None,
-    apiKey: Option[String] = None,
+    cognitoIdentityPoolId: Option[String],
+    accountId: Option[String],
+    cognitoIdentityId: Option[String],
+    caller: Option[String],
+    apiKey: Option[String],
     sourceIp: String,
-    cognitoAuthenticationType: Option[String] = None,
-    cognitoAuthenticationProvider: Option[String] = None,
-    userArn: Option[String] = None,
-    userAgent: Option[String] = None,
-    user: Option[String] = None
+    cognitoAuthenticationType: Option[String],
+    cognitoAuthenticationProvider: Option[String],
+    userArn: Option[String],
+    userAgent: Option[String],
+    user: Option[String]
 )
 
 object RequestContextIdentity {
@@ -38,7 +38,7 @@ case class RequestContext(
     resourceId: Option[String],
     stage: String,
     requestId: Option[String],
-    identity: Option[RequestContextIdentity] = None,
+    identity: Option[RequestContextIdentity],
     resourcePath: String,
     httpMethod: String,
     apiId: Option[String]
@@ -62,12 +62,12 @@ case class APIGatewayProxyRequest[T](
     resource: String,
     path: String,
     httpMethod: String,
-    headers: Option[Map[String, String]] = None,
-    queryStringParameters: Option[Map[String, String]] = None,
-    pathParameters: Option[Map[String, String]] = None,
-    stageVariables: Option[Map[String, String]] = None,
+    headers: Option[Map[String, String]],
+    queryStringParameters: Option[Map[String, String]],
+    pathParameters: Option[Map[String, String]],
+    stageVariables: Option[Map[String, String]],
     requestContext: RequestContext,
-    body: Option[T] = None,
+    body: Option[T],
     isBase64Encoded: Option[Boolean]
 )
 

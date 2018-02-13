@@ -26,7 +26,7 @@ abstract class LambdaProxy[I, F, S](implicit inputDecoder: Decoder[I],
                                     failureEncoder: Encoder[F],
                                     successEncoder: Encoder[S]) {
   implicit val reqDecoder: Decoder[APIGatewayProxyRequest[I]] = APIGatewayProxyRequest.decode[I](inputDecoder)
-  val logger                                                  = LoggerFactory.getLogger(getClass)
+  private val logger                                          = LoggerFactory.getLogger("BASE_HANDLER")
 
   def handler(request: APIGatewayProxyRequest[I],
               c: Context): Either[APIGatewayProxyResponse[F], APIGatewayProxyResponse[S]]
@@ -34,9 +34,8 @@ abstract class LambdaProxy[I, F, S](implicit inputDecoder: Decoder[I],
   def invalidInput(circeError: Error): APIGatewayProxyResponse[F]
 
   final def handler(is: InputStream, os: OutputStream, context: Context): Unit = {
-    logger.error("did I get here..")
     val inputString = Source.fromInputStream(is).mkString
-    System.err.println(inputString)
+    logger.debug(s"Lambda Proxy Input: $inputString")
     val input = decode[APIGatewayProxyRequest[I]](inputString)
     val outputString = input.fold(
       e => encode[F](invalidInput(e)),
@@ -46,8 +45,7 @@ abstract class LambdaProxy[I, F, S](implicit inputDecoder: Decoder[I],
           hs => encode[S](hs)
       )
     )
-    logger.error("this better output...")
-    logger.error(s"Output value: ${outputString}")
+    logger.debug(s"Lambda Proxy Output: $outputString")
     os.write(outputString.getBytes)
     os.close()
   }
