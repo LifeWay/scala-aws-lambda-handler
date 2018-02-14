@@ -108,7 +108,7 @@ case class APIGatewayProxyRequest[T](
     pathParameters: Option[Map[String, String]],
     stageVariables: Option[Map[String, String]],
     requestContext: RequestContext,
-    body: Option[T],
+    body: T,
     isBase64Encoded: Option[Boolean]
 ) extends APIGatewayProxyRequestBase
 
@@ -143,7 +143,7 @@ object APIGatewayProxyRequest {
         pathParameters        <- c.downField("pathParameters").as[Option[Map[String, String]]]
         stageVariables        <- c.downField("stageVariables").as[Option[Map[String, String]]]
         requestContext        <- c.downField("requestContext").as[RequestContext]
-        body                  <- updatedBodyCursor.as[Option[T]]
+        body                  <- updatedBodyCursor.as[T]
         isBase64Encoded       <- c.downField("isBase64Encoded").as[Option[Boolean]]
       } yield {
         new APIGatewayProxyRequest[T](
