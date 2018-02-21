@@ -63,7 +63,7 @@ object RequestContextIdentity {
 }
 
 case class RequestContext(
-    path: String,
+    path: Option[String],
     accountId: Option[Long],
     resourceId: Option[String],
     stage: String,

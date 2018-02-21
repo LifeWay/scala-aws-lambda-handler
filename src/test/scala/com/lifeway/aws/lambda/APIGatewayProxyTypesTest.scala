@@ -94,7 +94,7 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
           """.stripMargin
 
         val expectedObject = RequestContext(
-          "/{proxy+}",
+          Some("/{proxy+}"),
           Some(123456789012l),
           Some("nl9h80"),
           "test-invoke-stage",
@@ -115,7 +115,6 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
         val providedJson =
           """
             |{
-            |  "path": "/{proxy+}",
             |  "awesomeNewFeature": "SomeReallyImportantNewthing",
             |  "stage": "test-invoke-stage",
             |  "identity": {
@@ -127,7 +126,7 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
           """.stripMargin
 
         val expectedObject = RequestContext(
-          "/{proxy+}",
+          None,
           None,
           None,
           "test-invoke-stage",
@@ -187,7 +186,7 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
           Some(Map("proxy"   -> "Seattle")),
           Some(Map("varname" -> "varvalue")),
           RequestContext(
-            "/{proxy+}",
+            Some("/{proxy+}"),
             None,
             None,
             "test-invoke-stage",
@@ -214,7 +213,6 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
             |    "path": "/Seattle",
             |    "httpMethod": "POST",
             |    "requestContext": {
-            |      "path": "/{proxy+}",
             |      "stage": "test-invoke-stage",
             |      "identity": {
             |        "sourceIp": "sourceIP"
@@ -235,7 +233,7 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
           None,
           None,
           RequestContext(
-            "/{proxy+}",
+            None,
             None,
             None,
             "test-invoke-stage",
@@ -305,7 +303,7 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
           Some(Map("proxy"   -> "Seattle")),
           Some(Map("varname" -> "varvalue")),
           RequestContext(
-            "/{proxy+}",
+            Some("/{proxy+}"),
             None,
             None,
             "test-invoke-stage",
@@ -337,7 +335,6 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
             |    "path": "/Seattle",
             |    "httpMethod": "POST",
             |    "requestContext": {
-            |      "path": "/{proxy+}",
             |      "stage": "test-invoke-stage",
             |      "identity": {
             |        "sourceIp": "sourceIP"
@@ -359,7 +356,7 @@ object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
           None,
           None,
           RequestContext(
-            "/{proxy+}",
+            None,
             None,
             None,
             "test-invoke-stage",
