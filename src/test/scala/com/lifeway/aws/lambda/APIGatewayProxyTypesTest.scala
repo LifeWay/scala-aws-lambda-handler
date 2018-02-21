@@ -5,7 +5,7 @@ import io.circe.{Decoder, DecodingFailure, Encoder}
 import io.circe.parser._
 import utest._
 
-object APIGatewayProxyTypesTest extends TestSuite with LambdaProxy {
+object APIGatewayProxyTypesTest extends TestSuite with ProxyEncoder {
   val tests = Tests {
     'RequestContextIdentityDecoding - {
       "all fields provided" - {

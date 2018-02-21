@@ -4,7 +4,7 @@ import io.circe._
 import io.circe.syntax._
 import utest._
 
-object ErrorsTest extends TestSuite with LambdaProxy {
+object ErrorsTest extends TestSuite with ProxyEncoder {
 
   val tests = Tests {
     'InputError - {

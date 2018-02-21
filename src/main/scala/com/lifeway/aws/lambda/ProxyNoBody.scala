@@ -15,9 +15,9 @@ import io.circe.parser.decode
   * @tparam F - Failure type, a Circe type
   * @tparam S - Success type, a Circe type
   */
-abstract class ProxyNoBody[F, S](implicit failureEncoder: Encoder[F], successEncoder: Encoder[S]) extends ProxyBase[F] {
+abstract class ProxyNoBody[F, S](implicit failureEncoder: Encoder[F], successEncoder: Encoder[S]) extends Proxy[F] {
 
-  def handler(request: APIGatewayProxyRequestNoBody, c: Context): LambdaProxy.Response[F, S]
+  def handler(request: APIGatewayProxyRequestNoBody, c: Context): Proxy.Response[F, S]
 
   override final def handler(inputString: String, context: Context): String = {
     val input = decode[APIGatewayProxyRequestNoBody](inputString)
