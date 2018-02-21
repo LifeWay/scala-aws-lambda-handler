@@ -1,0 +1,40 @@
+package com.lifeway.aws.lambda
+
+import com.amazonaws.services.lambda.runtime.Context
+import java.io.{InputStream, OutputStream}
+
+import io.circe._
+import io.circe.syntax._
+import org.slf4j.LoggerFactory
+
+import scala.io.Source
+
+trait ProxyBase[F] extends LambdaProxy {
+  private[lambda] val baseLogger = LoggerFactory.getLogger("BASE_HANDLER")
+
+  def handler(inputString: String, context: Context): String
+
+  final def handler[T](is: InputStream, os: OutputStream, context: Context): Unit = {
+    val inputString = Source.fromInputStream(is).mkString
+    baseLogger.debug(s"Lambda Proxy Input: $inputString")
+    val outputString = handler(inputString, context)
+    baseLogger.debug(s"Lambda Proxy Output: $outputString")
+    os.write(outputString.getBytes)
+    os.close()
+  }
+
+  def invalidInput(circeError: Error): APIGatewayProxyResponse[F]
+}
+
+trait LambdaProxy {
+  def encode[T](obj: APIGatewayProxyResponse[T])(implicit encoder: Encoder[T],
+                                                 stringEncoder: Encoder[String]): String = {
+    val bodyAsJsonString = obj.body.map(_.asJson.noSpaces)
+    obj.copy[String](body = bodyAsJsonString).asJson(APIGatewayProxyResponse.encode[String]).noSpaces
+  }
+
+}
+
+object LambdaProxy {
+  type Response[F, S] = Either[APIGatewayProxyResponse[F], APIGatewayProxyResponse[S]]
+}
