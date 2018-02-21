@@ -1,5 +1,6 @@
 AWS-Scala-Lambda-Handler
 ---
+[![Build Status](https://travis-ci.org/lifeway/aws-scala-lambda-handler.svg?branch=master)](https://github.com/lifeway/scala-aws-lambda-handler)
 
 This is very small library purpose built to help you create Lambda functions with Scala and Proxied API Gateway Requests.
 
