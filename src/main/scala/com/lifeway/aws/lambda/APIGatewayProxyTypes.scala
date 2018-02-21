@@ -3,6 +3,7 @@ package com.lifeway.aws.lambda
 import io.circe.CursorOp.DownField
 import io.circe._
 import io.circe.parser._
+import io.circe.syntax._
 
 case class RequestContextIdentity(
     cognitoIdentityPoolId: Option[String],
@@ -33,6 +34,32 @@ object RequestContextIdentity {
       "userAgent",
       "user"
     )(RequestContextIdentity.apply)
+
+  implicit val encode: Encoder[RequestContextIdentity] = Encoder.forProduct11(
+    "cognitoIdentityPoolId",
+    "accountId",
+    "cognitoIdentityId",
+    "caller",
+    "apiKey",
+    "sourceIp",
+    "cognitoAuthenticationType",
+    "cognitoAuthenticationProvider",
+    "userArn",
+    "userAgent",
+    "user"
+  )(
+    x =>
+      (x.cognitoIdentityPoolId,
+       x.accountId,
+       x.cognitoIdentityId,
+       x.caller,
+       x.apiKey,
+       x.sourceIp,
+       x.cognitoAuthenticationType,
+       x.cognitoAuthenticationProvider,
+       x.userArn,
+       x.userAgent,
+       x.user))
 }
 
 case class RequestContext(
@@ -60,6 +87,18 @@ object RequestContext {
       "httpMethod",
       "apiId"
     )(RequestContext.apply)
+  implicit val encode: Encoder[RequestContext] =
+    Encoder.forProduct9(
+      "path",
+      "accountId",
+      "resourceId",
+      "stage",
+      "requestId",
+      "identity",
+      "resourcePath",
+      "httpMethod",
+      "apiId"
+    )(x => (x.path, x.accountId, x.resourceId, x.stage, x.requestId, x.identity, x.resourcePath, x.httpMethod, x.apiId))
 }
 
 sealed trait APIGatewayProxyRequestBase {
@@ -99,6 +138,29 @@ object APIGatewayProxyRequestNoBody {
       "requestContext",
       "isBase64Encoded"
     )(APIGatewayProxyRequestNoBody.apply)
+
+  implicit val encode: Encoder[APIGatewayProxyRequestNoBody] =
+    Encoder.forProduct9(
+      "resource",
+      "path",
+      "httpMethod",
+      "headers",
+      "queryStringParameters",
+      "pathParameters",
+      "stageVariables",
+      "requestContext",
+      "isBase64Encoded"
+    )(
+      x =>
+        (x.resource,
+         x.path,
+         x.httpMethod,
+         x.headers,
+         x.queryStringParameters,
+         x.pathParameters,
+         x.stageVariables,
+         x.requestContext,
+         x.isBase64Encoded))
 }
 
 case class APIGatewayProxyRequest[T](
@@ -140,6 +202,36 @@ object APIGatewayProxyRequest {
       "body",
       "isBase64Encoded"
     )(APIGatewayProxyRequest.apply)
+  }
+
+  def encode[T](typeEncoder: Encoder[T]): Encoder[APIGatewayProxyRequest[T]] = {
+    implicit val bodyEncoder: Encoder[T] = Encoder[T] { a: T =>
+      Json.fromString(a.asJson(typeEncoder).noSpaces)
+    }
+
+    Encoder.forProduct10(
+      "resource",
+      "path",
+      "httpMethod",
+      "headers",
+      "queryStringParameters",
+      "pathParameters",
+      "stageVariables",
+      "requestContext",
+      "body",
+      "isBase64Encoded"
+    )(
+      x =>
+        (x.resource,
+         x.path,
+         x.httpMethod,
+         x.headers,
+         x.queryStringParameters,
+         x.pathParameters,
+         x.stageVariables,
+         x.requestContext,
+         x.body,
+         x.isBase64Encoded))
   }
 }
 
