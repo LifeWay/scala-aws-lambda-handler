@@ -1,4 +1,4 @@
-name := "scala-aws-lambda-handler"
+name := "scala-lambda-handler"
 organization := "com.lifeway.aws"
 
 scalaVersion := "2.12.4"
