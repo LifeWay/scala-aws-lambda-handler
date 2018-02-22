@@ -16,6 +16,11 @@ This library attempts to be as light as possible so as to keep your cold start t
   * No logger implementation is provided - you pick. Given that you are using lambda, you may likely use the log4j2 handler from AWS. You will also need to pull in the log4j-slf4j-impl to have SLFJ4 logs from this library map over to log4j 
 
 ### Install
+
+Add the following dependency:
+```scala
+"com.lifeway.aws" %% "scala-lambda-handler" % "0.1.0"
+```
 (TODO: once published to maven central)
 
 ### Using the library
