@@ -16,9 +16,17 @@ trait Proxy[F] extends ProxyEncoder {
 
   final def handler[T](is: InputStream, os: OutputStream, context: Context): Unit = {
     val inputString = Source.fromInputStream(is).mkString
+
     baseLogger.debug(s"Lambda Proxy Input: $inputString")
-    val outputString = handler(inputString, context)
+
+    val outputString = Proxy.checkForWarmer(inputString).fold(
+      handler(inputString, context)
+    )(
+      warmer => "ACK"
+    )
+
     baseLogger.debug(s"Lambda Proxy Output: $outputString")
+
     os.write(outputString.getBytes)
     os.close()
   }
@@ -27,7 +35,17 @@ trait Proxy[F] extends ProxyEncoder {
 }
 
 object Proxy {
+
   type Response[F, S] = Either[APIGatewayProxyResponse[F], APIGatewayProxyResponse[S]]
+
+  val WARMER_KEY = "X-LAMBDA-WARMER"
+
+  def checkForWarmer(input: String): Option[Unit] = parser.parse(input).toOption.flatMap(
+    json => json.hcursor.get[Boolean](WARMER_KEY).getOrElse(false) match {
+      case true => Some(())
+      case false => None
+    }
+  )
 }
 
 trait ProxyEncoder {
