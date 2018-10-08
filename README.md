@@ -19,7 +19,7 @@ This library attempts to be as light as possible so as to keep your cold start t
 
 Add the following dependency:
 ```scala
-"com.lifeway.aws" %% "scala-lambda-handler" % "0.1.0"
+"com.lifeway.aws" %% "scala-lambda-handler" % "0.2.0"
 ```
 (TODO: once published to maven central)
 
