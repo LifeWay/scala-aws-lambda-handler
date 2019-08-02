@@ -39,13 +39,13 @@ abstract class CustomResourceProvider[Input, Output](
 
     val inputString = Source.fromInputStream(is).mkString
 
-    baseLogger.debug(s"Lambda Proxy Input: $inputString")
+    baseLogger.debug(s"Lambda Custom Resource Input: $inputString")
 
     val input = parser.decode[CustomResourceProvider.Request](inputString).right.get
 
     val outputString: String = handler(input, context).asJson.noSpaces
 
-    baseLogger.debug(s"Lambda Proxy Output: $outputString")
+    baseLogger.debug(s"Lambda Custom Resource Output: $outputString")
 
     os.write(outputString.getBytes)
     os.close()
