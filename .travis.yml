@@ -1,5 +1,6 @@
 jdk:
-  - oraclejdk8
+  - openjdk8
+  - openjdk11
 language: scala
 script: sbt clean compile coverage test
 before_cache:
