@@ -1,6 +1,6 @@
 package com.lifeway.aws.lambda
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 import java.nio.charset.Charset
 
 import utest._
@@ -356,7 +356,19 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
         val outputStream = new ByteArrayOutputStream()
         val context = makeContext()
 
-        Resource.handler(
+        def writeToOutputStream(os: OutputStream, str: String): requests.Response = {
+          os.write(str.getBytes)
+          os.close()
+
+          requests.Response("", 200, "", Map.empty, new requests.ResponseBlob("".getBytes), None)
+        }
+
+        CustomResourceProvider.handler(
+          Resource.handler,
+          (_, data) => writeToOutputStream(outputStream, data)
+        )(
+          Resource.baseLogger
+        )(
           inputStream,
           outputStream,
           context

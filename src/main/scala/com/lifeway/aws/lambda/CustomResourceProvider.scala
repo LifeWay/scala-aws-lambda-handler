@@ -3,13 +3,12 @@ package com.lifeway.aws.lambda
 import io.circe._
 import io.circe.syntax._
 import io.circe.CursorOp.DownField
+
+import scala.io.Source
 import java.io.{InputStream, OutputStream}
-import java.nio.charset.Charset
 
 import com.amazonaws.services.lambda.runtime.Context
 import org.slf4j.{Logger, LoggerFactory}
-
-import scala.io.Source
 
 /**
   * Abstract Lambda Handler for Scala for Cloud Formation Custom Resource events. You must extend
@@ -36,24 +35,85 @@ abstract class CustomResourceProvider[Input, Output](
 
   def handler(request: CustomResourceProvider.Request, context: Context): CustomResourceProvider.Response
 
-  final def handler(is: InputStream, os: OutputStream, context: Context): Unit = {
+  final def handler(is: InputStream, os: OutputStream, context: Context): Unit =
+    CustomResourceProvider.handler(
+      handler,
+      (url, data) => requests.put(url = url, data = data)
+    )(
+      baseLogger
+    )(
+      is,
+      os,
+      context
+    )
+//    {
+//
+//      val inputString = Source.fromInputStream(is).mkString
+//
+//      baseLogger.debug(s"Lambda Custom Resource Input: $inputString")
+//
+//      parser
+//        .decode[CustomResourceProvider.Request](inputString)
+//        .fold(
+//          error => baseLogger.error("Unable to decode lambda input", error),
+//          input => {
+//
+//            val output       = handler(input, context)
+//            val outputString = output.asJson.noSpaces
+//
+//            baseLogger.debug(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
+//
+//            val response = requests.put(
+//              input.responseUrl,
+//              data = outputString
+//            )
+//
+//            baseLogger.debug("Response status code: %d", response.statusCode)
+//          }
+//        )
+//    }
+}
+
+object CustomResourceProvider {
+
+  def handler(
+      handler: (Request, Context) => Response,
+      putRequest: (String, String) => requests.Response
+  )(
+      baseLogger: Logger
+  )(
+      is: InputStream,
+      os: OutputStream,
+      context: Context
+  )(
+      implicit requestDecoder: Decoder[Request],
+      responseEncoder: Encoder[Response]
+  ): Unit = {
 
     val inputString = Source.fromInputStream(is).mkString
 
     baseLogger.debug(s"Lambda Custom Resource Input: $inputString")
 
-    val input = parser.decode[CustomResourceProvider.Request](inputString).right.get
+    parser
+      .decode[CustomResourceProvider.Request](inputString)
+      .fold(
+        error => baseLogger.error("Unable to decode lambda input", error),
+        input => {
 
-    val outputString: String = handler(input, context).asJson.noSpaces
+          val output       = handler(input, context)
+          val outputString = output.asJson.noSpaces
 
-    baseLogger.debug(s"Lambda Custom Resource Output: $outputString")
+          baseLogger.debug(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
 
-    os.write(outputString.getBytes)
-    os.close()
+          val response = putRequest(
+            input.responseUrl,
+            outputString
+          )
+
+          baseLogger.debug("Response status code: %d", response.statusCode)
+        }
+      )
   }
-}
-
-object CustomResourceProvider {
 
   object RequestTypes {
 
@@ -62,7 +122,10 @@ object CustomResourceProvider {
     val Delete = "Delete"
   }
 
-  sealed trait Request
+  sealed trait Request {
+
+    def responseUrl: String
+  }
 
   case class CreateRequest[T](
       requestID: String,
@@ -74,6 +137,29 @@ object CustomResourceProvider {
   ) extends Request {
 
     val requestType = RequestTypes.Create
+
+    def toSuccess(
+        physicalResourceID: String,
+        noEcho: Boolean = false,
+        reason: Option[String] = None,
+        data: Option[T] = None
+    ): Response = Success(
+      requestID,
+      stackID,
+      logicalResourceID,
+      physicalResourceID,
+      noEcho,
+      reason,
+      data
+    )
+
+    def toFailure(reason: String, physicalResourceID: String): Response = Failure(
+      reason,
+      requestID,
+      stackID,
+      logicalResourceID,
+      physicalResourceID
+    )
   }
 
   case class UpdateRequest[T](
@@ -88,6 +174,28 @@ object CustomResourceProvider {
   ) extends Request {
 
     val requestType = RequestTypes.Update
+
+    def toSuccess(
+        noEcho: Boolean = false,
+        reason: Option[String] = None,
+        data: Option[T] = None
+    ): Response = Success(
+      requestID,
+      stackID,
+      logicalResourceID,
+      physicalResourceID,
+      noEcho,
+      reason,
+      data
+    )
+
+    def toFailure(reason: String): Response = Failure(
+      reason,
+      requestID,
+      stackID,
+      logicalResourceID,
+      physicalResourceID
+    )
   }
 
   case class DeleteRequest[T](
@@ -101,6 +209,28 @@ object CustomResourceProvider {
   ) extends Request {
 
     val requestType = RequestTypes.Delete
+
+    def toSuccess(
+        noEcho: Boolean = false,
+        reason: Option[String] = None,
+        data: Option[T] = None
+    ): Response = Success(
+      requestID,
+      stackID,
+      logicalResourceID,
+      physicalResourceID,
+      noEcho,
+      reason,
+      data
+    )
+
+    def toFailure(reason: String): Response = Failure(
+      reason,
+      requestID,
+      stackID,
+      logicalResourceID,
+      physicalResourceID
+    )
   }
 
   def decodeRequest[T](implicit typeDecoder: Decoder[T]): Decoder[Request] = {
