@@ -5,6 +5,7 @@ import java.io.{InputStream, OutputStream}
 
 import io.circe._
 import io.circe.syntax._
+
 import org.slf4j.LoggerFactory
 
 import scala.io.Source
