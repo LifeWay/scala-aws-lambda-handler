@@ -1,15 +1,17 @@
 package com.lifeway.aws.lambda
 
-import utest._
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.nio.charset.Charset
 
+import utest._
 import io.circe._
 import io.circe.syntax._
 import io.circe.CursorOp.DownField
 import io.circe.{Decoder, DecodingFailure, Encoder}
-
 import CustomResourceProvider._
+import com.amazonaws.services.lambda.runtime.Context
 
-object CustomResourceProviderRequestTest extends TestSuite {
+object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils {
 
   case class ResProp(key1: String, key2: Seq[String], key3: Map[String, String])
 
@@ -195,8 +197,6 @@ object CustomResourceProviderRequestTest extends TestSuite {
         println(input.as[CustomResourceProvider.Request])
         println()
 
-
-
         assert(input.as[CustomResourceProvider.Request] == expectedError)
       }
 
@@ -313,6 +313,76 @@ object CustomResourceProviderRequestTest extends TestSuite {
         )
 
         assert(response.asInstanceOf[Response].asJson == json)
+      }
+    }
+
+    'CustomResourceProvider - {
+
+      "calls handler correctly" - {
+
+        object Resource extends CustomResourceProvider[ResProp, ResProp] {
+
+          override def handler(request: Request, context: Context): Response = {
+
+            val req = request.asInstanceOf[CreateRequest[ResProp]]
+
+            Success(
+              req.requestID,
+              req.stackID,
+              req.logicalResourceID,
+              physicalResourceID = context.getLogStreamName,
+              data = req.resourceProperties
+            )
+          }
+        }
+
+        val inputString =
+          """{
+             |   "RequestType" : "Create",
+             |   "RequestId" : "unique id for this create request",
+             |   "ResponseURL" : "pre-signed-url-for-create-response",
+             |   "ResourceType" : "Custom::MyCustomResourceType",
+             |   "LogicalResourceId" : "name of resource in template",
+             |   "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
+             |   "ResourceProperties" : {
+             |      "key1" : "string",
+             |      "key2" : [ "list" ],
+             |      "key3" : { "key4" : "map" }
+             |   }
+             |}
+             |""".stripMargin
+
+        val inputStream = streamFromString(inputString)
+        val outputStream = new ByteArrayOutputStream()
+        val context = makeContext()
+
+        Resource.handler(
+          inputStream,
+          outputStream,
+          context
+        )
+
+        val expectedJsonOutput = parser.parse(
+          s"""{
+             |   "Status" : "SUCCESS",
+             |   "RequestId" : "unique id for this create request",
+             |   "LogicalResourceId" : "name of resource in template",
+             |   "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
+             |   "PhysicalResourceId" : "${context.getLogStreamName}",
+             |   "NoEcho" : false,
+             |   "Reason" : null,
+             |   "Data" : {
+             |      "key1" : "string",
+             |      "key2" : [ "list" ],
+             |      "key3" : { "key4" : "map" }
+             |   }
+             |}
+             |""".stripMargin
+        ).right.get
+
+        val actualJsonOutput = parser.parse(outputStream.toString).right.get
+
+        assert(actualJsonOutput == expectedJsonOutput)
       }
     }
   }

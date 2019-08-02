@@ -4,6 +4,7 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.CursorOp.DownField
 import java.io.{InputStream, OutputStream}
+import java.nio.charset.Charset
 
 import com.amazonaws.services.lambda.runtime.Context
 import org.slf4j.{Logger, LoggerFactory}
@@ -194,10 +195,11 @@ object CustomResourceProvider {
     val decoders = Seq(decodeCreateRequest, decodeUpdateRequest, decodeDeleteRequest)
 
     decoders.tail.foldLeft(decoders.head)(
-      (acc, decoder) => acc.handleErrorWith {
+      (acc, decoder) =>
+        acc.handleErrorWith {
 
-        case InvalidRequestTypeFailure => decoder
-        case df => Decoder.failed(df)
+          case InvalidRequestTypeFailure => decoder
+          case df                        => Decoder.failed(df)
       }
     )
   }
@@ -205,10 +207,10 @@ object CustomResourceProvider {
   sealed trait Response
 
   case class Success[T](
-      physicalResourceID: String,
-      stackID: String,
       requestID: String,
+      stackID: String,
       logicalResourceID: String,
+      physicalResourceID: String,
       noEcho: Boolean = false,
       reason: Option[String] = None,
       data: Option[T] = None
@@ -219,10 +221,10 @@ object CustomResourceProvider {
 
   case class Failure(
       reason: String,
-      physicalResourceID: String,
-      stackID: String,
       requestID: String,
-      logicalResourceID: String
+      stackID: String,
+      logicalResourceID: String,
+      physicalResourceID: String
   ) extends Response {
 
     val status = "SUCCESS"
