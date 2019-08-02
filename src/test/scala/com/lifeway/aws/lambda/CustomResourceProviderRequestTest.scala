@@ -42,13 +42,11 @@ object CustomResourceProviderRequestTest extends TestSuite {
               "key2" -> Seq("list").asJson,
               "key3" -> Json.obj("key4" -> "map".asJson)
             )
-            .noSpaces
-            .asJson
         )
 
         val expectedError = Left(
           DecodingFailure(
-            "Invalid request type (Bad). Parsing failed.",
+            "Invalid request type",
             List(DownField("RequestType"))
           )
         )
@@ -80,7 +78,7 @@ object CustomResourceProviderRequestTest extends TestSuite {
           "ResourceType"       -> expectedOutput.resourceType.asJson,
           "LogicalResourceId"  -> expectedOutput.logicalResourceID.asJson,
           "StackId"            -> expectedOutput.stackID.asJson,
-          "ResourceProperties" -> expectedOutput.resourceProperties.asJson.noSpaces.asJson
+          "ResourceProperties" -> expectedOutput.resourceProperties.asJson
         )
 
         assert(input.as[CustomResourceProvider.Request] == Right(expectedOutput))
@@ -115,13 +113,11 @@ object CustomResourceProviderRequestTest extends TestSuite {
               "key2" -> Seq("new-list").asJson,
               "key3" -> Json.obj("key4" -> "new-map".asJson)
             )
-            .noSpaces
-            .asJson
         )
 
         val expectedError = DecodingFailure(
-          "Attempt to decode value on failed cursor: DownField(key1)",
-          List(DownField("ResourceProperties"))
+          "Attempt to decode value on failed cursor",
+          List(DownField("key1"), DownField("ResourceProperties"))
         )
 
         assert(input.as[CustomResourceProvider.Request] == Left(expectedError))
@@ -160,8 +156,8 @@ object CustomResourceProviderRequestTest extends TestSuite {
           "LogicalResourceId"     -> expectedOutput.logicalResourceID.asJson,
           "StackId"               -> expectedOutput.stackID.asJson,
           "PhysicalResourceId"    -> expectedOutput.physicalResourceID.asJson,
-          "ResourceProperties"    -> expectedOutput.resourceProperties.asJson.noSpaces.asJson,
-          "OldResourceProperties" -> expectedOutput.oldResourceProperties.asJson.noSpaces.asJson
+          "ResourceProperties"    -> expectedOutput.resourceProperties.asJson,
+          "OldResourceProperties" -> expectedOutput.oldResourceProperties.asJson
         )
 
         assert(input.as[CustomResourceProvider.Request] == Right(expectedOutput))
@@ -171,35 +167,35 @@ object CustomResourceProviderRequestTest extends TestSuite {
 
         val input = Json.obj(
           "RequestType"       -> "Update".asJson,
-          "RequestId"         -> "unique id for this create request".asJson,
-          "ResponseURL"       -> "pre-signed-url-for-create-response".asJson,
+          "RequestId"         -> "unique id for this update request".asJson,
+          "ResponseURL"       -> "pre-signed-url-for-update-response".asJson,
           "ResourceType"      -> "Custom::MyCustomResourceType".asJson,
           "LogicalResourceId" -> "name of resource in template".asJson,
           "StackId"           -> "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid".asJson,
-          "OldResourceProperties" -> Json
-            .obj(
-              "key1" -> "string".asJson,
-              "key2" -> Seq("list").asJson,
-              "key3" -> Json.obj("key4" -> "map".asJson)
-            )
-            .noSpaces
-            .asJson,
-          "ResourceProperties" -> Json
-            .obj(
-              "key1" -> "new-string".asJson,
-              "key2" -> Seq("new-list").asJson,
-              "key3" -> Json.obj("key4" -> "new-map".asJson)
-            )
-            .noSpaces
-            .asJson
+          "OldResourceProperties" -> Json.obj(
+            "key1" -> "string".asJson,
+            "key2" -> Seq("list").asJson,
+            "key3" -> Json.obj("key4" -> "map".asJson)
+          ),
+          "ResourceProperties" -> Json.obj(
+            "key1" -> "new-string".asJson,
+            "key2" -> Seq("new-list").asJson,
+            "key3" -> Json.obj("key4" -> "new-map".asJson)
+          )
         )
 
         val expectedError = Left(
           DecodingFailure(
-            "The PhysicalResourceId field is required for the Update RequestType",
+            "Attempt to decode value on failed cursor",
             List(DownField("PhysicalResourceId"))
           )
         )
+
+        println()
+        println(input.as[CustomResourceProvider.Request])
+        println()
+
+
 
         assert(input.as[CustomResourceProvider.Request] == expectedError)
       }
@@ -230,7 +226,7 @@ object CustomResourceProviderRequestTest extends TestSuite {
           "LogicalResourceId"  -> expectedOutput.logicalResourceID.asJson,
           "StackId"            -> expectedOutput.stackID.asJson,
           "PhysicalResourceId" -> expectedOutput.physicalResourceID.asJson,
-          "ResourceProperties" -> expectedOutput.resourceProperties.asJson.noSpaces.asJson
+          "ResourceProperties" -> expectedOutput.resourceProperties.asJson
         )
 
         assert(input.as[CustomResourceProvider.Request] == Right(expectedOutput))
@@ -240,32 +236,21 @@ object CustomResourceProviderRequestTest extends TestSuite {
 
         val input = Json.obj(
           "RequestType"       -> "Delete".asJson,
-          "RequestId"         -> "unique id for this create request".asJson,
-          "ResponseURL"       -> "pre-signed-url-for-create-response".asJson,
+          "RequestId"         -> "unique id for this delete request".asJson,
+          "ResponseURL"       -> "pre-signed-url-for-delete-response".asJson,
           "ResourceType"      -> "Custom::MyCustomResourceType".asJson,
           "LogicalResourceId" -> "name of resource in template".asJson,
           "StackId"           -> "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid".asJson,
-          "OldResourceProperties" -> Json
-            .obj(
-              "key1" -> "string".asJson,
-              "key2" -> Seq("list").asJson,
-              "key3" -> Json.obj("key4" -> "map".asJson)
-            )
-            .noSpaces
-            .asJson,
-          "ResourceProperties" -> Json
-            .obj(
-              "key1" -> "new-string".asJson,
-              "key2" -> Seq("new-list").asJson,
-              "key3" -> Json.obj("key4" -> "new-map".asJson)
-            )
-            .noSpaces
-            .asJson
+          "ResourceProperties" -> Json.obj(
+            "key1" -> "string".asJson,
+            "key2" -> Seq("list").asJson,
+            "key3" -> Json.obj("key4" -> "map".asJson)
+          )
         )
 
         val expectedError = Left(
           DecodingFailure(
-            "The PhysicalResourceId field is required for the Delete RequestType",
+            "Attempt to decode value on failed cursor",
             List(DownField("PhysicalResourceId"))
           )
         )

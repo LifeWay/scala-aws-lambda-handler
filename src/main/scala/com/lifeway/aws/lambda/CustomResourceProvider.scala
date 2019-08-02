@@ -25,7 +25,7 @@ abstract class CustomResourceProvider[Input, Output](
     outputEncoder: Encoder[Output]
 ) {
 
-  protected [lambda] val baseLogger: Logger = LoggerFactory.getLogger("BASE_HANDLER")
+  protected[lambda] val baseLogger: Logger = LoggerFactory.getLogger("BASE_HANDLER")
 
   implicit val requestDecoder: Decoder[CustomResourceProvider.Request] =
     CustomResourceProvider.decodeRequest(inputDecoder)
@@ -102,108 +102,105 @@ object CustomResourceProvider {
     val requestType = RequestTypes.Delete
   }
 
-  def decodeRequest[T](typeDecoder: Decoder[T]): Decoder[Request] = (c: HCursor) => {
+  def decodeRequest[T](implicit typeDecoder: Decoder[T]): Decoder[Request] = {
 
-    implicit val propDecoder: Decoder[T] = Decoder.decodeString
-      .withErrorMessage("The request resource properties must be a stringified JSON object. Parsing failed.")
-      .emap[T](
-        jsonString =>
-          parser
-            .decode[T](jsonString)(typeDecoder)
-            .fold(
-              error => Left(error.getMessage),
-              obj => Right(obj)
-          )
-      )
+    val InvalidRequestTypeFailure = DecodingFailure(
+      s"Invalid request type",
+      List(DownField("RequestType"))
+    )
 
-    val res = for {
+    def checkRequestType(expectedRequestType: String)(c: HCursor): Either[DecodingFailure, String] =
+      c.get[String]("RequestType")
+        .filterOrElse(
+          rt => rt == expectedRequestType,
+          InvalidRequestTypeFailure
+        )
 
-      requestType           <- c.get[String]("RequestType")
-      requestID             <- c.get[String]("RequestId")
-      responseUrl           <- c.get[String]("ResponseURL")
-      resourceType          <- c.get[String]("ResourceType")
-      logicalResourceID     <- c.get[String]("LogicalResourceId")
-      physicalResourceID    <- c.get[Option[String]]("PhysicalResourceId")
-      stackID               <- c.get[String]("StackId")
-      resourceProperties    <- c.get[Option[T]]("ResourceProperties")
-      oldResourceProperties <- c.get[Option[T]]("OldResourceProperties")
+    val decodeCreateRequest: Decoder[Request] = (c: HCursor) =>
+      for {
 
-    } yield {
+        _                  <- checkRequestType(RequestTypes.Create)(c)
+        requestID          <- c.get[String]("RequestId")
+        responseUrl        <- c.get[String]("ResponseURL")
+        resourceType       <- c.get[String]("ResourceType")
+        logicalResourceID  <- c.get[String]("LogicalResourceId")
+        stackID            <- c.get[String]("StackId")
+        resourceProperties <- c.get[Option[T]]("ResourceProperties")
 
-      requestType match {
+      } yield {
 
-        case RequestTypes.Create =>
-          Right(
-            CreateRequest(
-              requestID,
-              responseUrl,
-              resourceType,
-              logicalResourceID,
-              stackID,
-              resourceProperties
-            )
-          )
-
-        case RequestTypes.Update if physicalResourceID.isDefined =>
-          Right(
-            UpdateRequest(
-              requestID,
-              responseUrl,
-              resourceType,
-              logicalResourceID,
-              stackID,
-              physicalResourceID.get,
-              resourceProperties,
-              oldResourceProperties
-            )
-          )
-
-        case RequestTypes.Update =>
-          Left(
-            DecodingFailure(
-              "The PhysicalResourceId field is required for the Update RequestType",
-              List(DownField("PhysicalResourceId"))
-            )
-          )
-
-        case RequestTypes.Delete if physicalResourceID.isDefined =>
-          Right(
-            DeleteRequest(
-              requestID,
-              responseUrl,
-              resourceType,
-              logicalResourceID,
-              stackID,
-              physicalResourceID.get,
-              resourceProperties
-            )
-          )
-
-        case RequestTypes.Delete =>
-          Left(
-            DecodingFailure(
-              "The PhysicalResourceId field is required for the Delete RequestType",
-              List(DownField("PhysicalResourceId"))
-            )
-          )
-
-        case other =>
-          Left(
-            DecodingFailure(
-              s"Invalid request type ($other). Parsing failed.",
-              List(DownField("RequestType"))
-            )
-          )
-      }
+        CreateRequest(
+          requestID,
+          responseUrl,
+          resourceType,
+          logicalResourceID,
+          stackID,
+          resourceProperties
+        )
     }
 
-    // Flatten out the Either
-    res.fold(
-      df => Left(df),
-      decoder => decoder
-    )
-  }
+    val decodeUpdateRequest: Decoder[Request] = (c: HCursor) =>
+      for {
 
+        _                     <- checkRequestType(RequestTypes.Update)(c)
+        requestID             <- c.get[String]("RequestId")
+        responseUrl           <- c.get[String]("ResponseURL")
+        resourceType          <- c.get[String]("ResourceType")
+        logicalResourceID     <- c.get[String]("LogicalResourceId")
+        physicalResourceID    <- c.get[String]("PhysicalResourceId")
+        stackID               <- c.get[String]("StackId")
+        resourceProperties    <- c.get[Option[T]]("ResourceProperties")
+        oldResourceProperties <- c.get[Option[T]]("OldResourceProperties")
+
+      } yield {
+
+        UpdateRequest(
+          requestID,
+          responseUrl,
+          resourceType,
+          logicalResourceID,
+          stackID,
+          physicalResourceID,
+          resourceProperties,
+          oldResourceProperties
+        )
+    }
+
+    val decodeDeleteRequest: Decoder[Request] = (c: HCursor) =>
+      for {
+
+        _                  <- checkRequestType(RequestTypes.Delete)(c)
+        requestID          <- c.get[String]("RequestId")
+        responseUrl        <- c.get[String]("ResponseURL")
+        resourceType       <- c.get[String]("ResourceType")
+        logicalResourceID  <- c.get[String]("LogicalResourceId")
+        physicalResourceID <- c.get[String]("PhysicalResourceId")
+        stackID            <- c.get[String]("StackId")
+        resourceProperties <- c.get[Option[T]]("ResourceProperties")
+
+      } yield {
+
+        DeleteRequest(
+          requestID,
+          responseUrl,
+          resourceType,
+          logicalResourceID,
+          stackID,
+          physicalResourceID,
+          resourceProperties
+        )
+    }
+
+    decodeCreateRequest.handleErrorWith {
+      case InvalidRequestTypeFailure =>
+        decodeUpdateRequest.handleErrorWith {
+          case InvalidRequestTypeFailure => decodeDeleteRequest
+          case df                        => Decoder.failed(df)
+        }
+      case df => Decoder.failed(df)
+    }
+  }
+  
   sealed trait Response
 
   case class Success[T](
