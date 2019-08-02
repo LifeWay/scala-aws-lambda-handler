@@ -191,16 +191,17 @@ object CustomResourceProvider {
         )
     }
 
-    decodeCreateRequest.handleErrorWith {
-      case InvalidRequestTypeFailure =>
-        decodeUpdateRequest.handleErrorWith {
-          case InvalidRequestTypeFailure => decodeDeleteRequest
-          case df                        => Decoder.failed(df)
-        }
-      case df => Decoder.failed(df)
-    }
+    val decoders = Seq(decodeCreateRequest, decodeUpdateRequest, decodeDeleteRequest)
+
+    decoders.tail.foldLeft(decoders.head)(
+      (acc, decoder) => acc.handleErrorWith {
+
+        case InvalidRequestTypeFailure => decoder
+        case df => Decoder.failed(df)
+      }
+    )
   }
-  
+
   sealed trait Response
 
   case class Success[T](
