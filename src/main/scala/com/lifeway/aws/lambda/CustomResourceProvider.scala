@@ -46,32 +46,6 @@ abstract class CustomResourceProvider[Input, Output](
       os,
       context
     )
-//    {
-//
-//      val inputString = Source.fromInputStream(is).mkString
-//
-//      baseLogger.debug(s"Lambda Custom Resource Input: $inputString")
-//
-//      parser
-//        .decode[CustomResourceProvider.Request](inputString)
-//        .fold(
-//          error => baseLogger.error("Unable to decode lambda input", error),
-//          input => {
-//
-//            val output       = handler(input, context)
-//            val outputString = output.asJson.noSpaces
-//
-//            baseLogger.debug(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
-//
-//            val response = requests.put(
-//              input.responseUrl,
-//              data = outputString
-//            )
-//
-//            baseLogger.debug("Response status code: %d", response.statusCode)
-//          }
-//        )
-//    }
 }
 
 object CustomResourceProvider {
