@@ -10,6 +10,7 @@ libraryDependencies ++= Seq(
   "io.circe"      %% "circe-parser"        % circeVersion,
   "org.slf4j"     % "slf4j-api"            % "1.7.26",
   "com.amazonaws" % "aws-lambda-java-core" % "1.2.0",
+  "com.lihaoyi"   %% "requests"            % "0.2.0",
   "com.lihaoyi"   %% "utest"               % "0.6.3" % "test"
 )
 
