@@ -6,7 +6,8 @@ This is very small library purpose built to help you create Lambda functions wit
 
 Inspiration for this library came from another Scala Lambda library https://github.com/mkotsur/aws-lambda-scala. The largest difference between these two libraries as of February 2018:
 
-* AWS-Scala-Lambda-Handler ONLY supports Proxied API Gateway Requests.
+* AWS-Scala-Lambda-Handler ONLY supports Proxied API Gateway Requests. (`0.2.0` release)
+* AWS-Scala-Lambda-Handler now also supports CloudFormation custom resource types (`0.3.0` release)
 * AWS-Scala-Lambda-Handler is built around a strong type system - no Exceptions should ever be thrown - they should be defined as types where the error types return valid HTTP responses for the API Gateway Proxy. We've included an abstract Errors class that you can use that is purpose built for this, or you can provide your own.
 
 This library attempts to be as light as possible so as to keep your cold start times down.
@@ -19,7 +20,7 @@ This library attempts to be as light as possible so as to keep your cold start t
 
 Add the following dependency:
 ```scala
-"com.lifeway.aws" %% "scala-lambda-handler" % "0.2.0"
+"com.lifeway.aws" %% "scala-lambda-handler" % "0.3.0"
 ```
 (TODO: once published to maven central)
 
