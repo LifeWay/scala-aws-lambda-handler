@@ -66,10 +66,10 @@ object CustomResourceProvider {
 
     val inputString = Source.fromInputStream(is).mkString
 
-    baseLogger.debug(s"Lambda Custom Resource Input: $inputString")
+    baseLogger.info(s"Lambda Custom Resource Input: $inputString")
 
     parser
-      .decode[CustomResourceProvider.Request](inputString)
+      .decode[Request](inputString)
       .fold(
         error => baseLogger.error("Unable to decode lambda input", error),
         input => {
@@ -77,14 +77,14 @@ object CustomResourceProvider {
           val output       = handler(input, context)
           val outputString = output.asJson.noSpaces
 
-          baseLogger.debug(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
+          baseLogger.info(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
 
           val response = putRequest(
             input.responseUrl,
             outputString
           )
 
-          baseLogger.debug("Response status code: %d", response.statusCode)
+          baseLogger.info("Response status code: %d", response.statusCode)
         }
       )
   }
@@ -112,11 +112,11 @@ object CustomResourceProvider {
 
     val requestType = RequestTypes.Create
 
-    def toSuccess(
+    def toSuccess[U](
         physicalResourceID: String,
         noEcho: Boolean = false,
         reason: Option[String] = None,
-        data: Option[T] = None
+        data: Option[U] = None
     ): Response = Success(
       requestID,
       stackID,
@@ -149,10 +149,10 @@ object CustomResourceProvider {
 
     val requestType = RequestTypes.Update
 
-    def toSuccess(
+    def toSuccess[U](
         noEcho: Boolean = false,
         reason: Option[String] = None,
-        data: Option[T] = None
+        data: Option[U] = None
     ): Response = Success(
       requestID,
       stackID,
@@ -184,10 +184,10 @@ object CustomResourceProvider {
 
     val requestType = RequestTypes.Delete
 
-    def toSuccess(
+    def toSuccess[U](
         noEcho: Boolean = false,
         reason: Option[String] = None,
-        data: Option[T] = None
+        data: Option[U] = None
     ): Response = Success(
       requestID,
       stackID,
@@ -331,7 +331,7 @@ object CustomResourceProvider {
       physicalResourceID: String
   ) extends Response {
 
-    val status = "SUCCESS"
+    val status = "FAILED"
   }
 
   def encodeSuccess[T](implicit typeEncoder: Encoder[T]): Encoder[Success[T]] =
@@ -383,3 +383,4 @@ object CustomResourceProvider {
     case f: Failure    => f.asJson(encodeFailure)
   }
 }
+
