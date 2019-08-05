@@ -1,7 +1,6 @@
 package com.lifeway.aws.lambda
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
-import java.nio.charset.Charset
+import java.io.{ByteArrayOutputStream, OutputStream}
 
 import utest._
 import io.circe._
@@ -280,7 +279,7 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
         )
 
         val json = Json.obj(
-          "Status"             -> response.status.asJson,
+          "Status"             -> "SUCCESS".asJson,
           "Reason"             -> response.reason.asJson,
           "RequestId"          -> response.requestID.asJson,
           "LogicalResourceId"  -> response.logicalResourceID.asJson,
@@ -304,7 +303,7 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
         )
 
         val json = Json.obj(
-          "Status"             -> response.status.asJson,
+          "Status"             -> "FAILED".asJson,
           "Reason"             -> response.reason.asJson,
           "RequestId"          -> response.requestID.asJson,
           "LogicalResourceId"  -> response.logicalResourceID.asJson,
