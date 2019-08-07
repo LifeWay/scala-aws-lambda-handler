@@ -37,6 +37,7 @@ abstract class CustomResourceProvider[Input, Output](
 
   def handler(request: CustomResourceProvider.Request, context: Context): CustomResourceProvider.Response
 
+  // $COVERAGE-OFF$
   final def handler(is: InputStream, os: OutputStream, context: Context): Unit =
     CustomResourceProvider.handler(
       handler,
@@ -48,6 +49,7 @@ abstract class CustomResourceProvider[Input, Output](
       os,
       context
     )
+  // $COVERAGE-ON$
 }
 
 object CustomResourceProvider {
@@ -89,7 +91,7 @@ object CustomResourceProvider {
             outputString
           )
 
-          baseLogger.info("Response status code: %d", response.statusCode)
+          baseLogger.info("Response status code: {}}", response.statusCode)
         }
       )
   }
@@ -137,7 +139,6 @@ object CustomResourceProvider {
 
     override def toSuccess[U](noEcho: Boolean, reason: Option[String], data: Option[U]): Response =
       toSuccess("", noEcho, reason, data)
-
 
     def toFailure(reason: String): Response = toFailure(reason, "")
     def toFailure(reason: String, physicalResourceID: String): Response = Failure(
