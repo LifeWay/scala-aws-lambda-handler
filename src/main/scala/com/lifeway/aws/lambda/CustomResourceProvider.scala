@@ -10,6 +10,8 @@ import java.io.{InputStream, OutputStream}
 import com.amazonaws.services.lambda.runtime.Context
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.util.Try
+
 /**
   * Abstract Lambda Handler for Scala for Cloud Formation Custom Resource events. You must extend
   * this class and implement the handler method. Additionally, you must provide a Circe decoder for
@@ -35,6 +37,7 @@ abstract class CustomResourceProvider[Input, Output](
 
   def handler(request: CustomResourceProvider.Request, context: Context): CustomResourceProvider.Response
 
+  // $COVERAGE-OFF$
   final def handler(is: InputStream, os: OutputStream, context: Context): Unit =
     CustomResourceProvider.handler(
       handler,
@@ -46,6 +49,7 @@ abstract class CustomResourceProvider[Input, Output](
       os,
       context
     )
+  // $COVERAGE-ON$
 }
 
 object CustomResourceProvider {
@@ -74,9 +78,12 @@ object CustomResourceProvider {
         error => baseLogger.error("Unable to decode lambda input", error),
         input => {
 
-          val output       = handler(input, context)
-          val outputString = output.asJson.noSpaces
+          val output = Try(handler(input, context)).fold(
+            error => input.toFailure(error.getMessage),
+            identity
+          )
 
+          val outputString = output.asJson.noSpaces
           baseLogger.info(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
 
           val response = putRequest(
@@ -84,7 +91,7 @@ object CustomResourceProvider {
             outputString
           )
 
-          baseLogger.info("Response status code: %d", response.statusCode)
+          baseLogger.info("Response status code: {}}", response.statusCode)
         }
       )
   }
@@ -99,6 +106,9 @@ object CustomResourceProvider {
   sealed trait Request {
 
     def responseUrl: String
+
+    def toSuccess[U](noEcho: Boolean, reason: Option[String], data: Option[U]): Response
+    def toFailure(reason: String): Response
   }
 
   case class CreateRequest[T](
@@ -127,6 +137,10 @@ object CustomResourceProvider {
       data
     )
 
+    override def toSuccess[U](noEcho: Boolean, reason: Option[String], data: Option[U]): Response =
+      toSuccess("", noEcho, reason, data)
+
+    def toFailure(reason: String): Response = toFailure(reason, "")
     def toFailure(reason: String, physicalResourceID: String): Response = Failure(
       reason,
       requestID,
@@ -383,4 +397,3 @@ object CustomResourceProvider {
     case f: Failure    => f.asJson(encodeFailure)
   }
 }
-
