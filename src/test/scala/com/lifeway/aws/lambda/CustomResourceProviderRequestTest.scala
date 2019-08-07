@@ -351,9 +351,9 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
              |}
              |""".stripMargin
 
-        val inputStream = streamFromString(inputString)
+        val inputStream  = streamFromString(inputString)
         val outputStream = new ByteArrayOutputStream()
-        val context = makeContext()
+        val context      = makeContext()
 
         def writeToOutputStream(os: OutputStream, str: String): requests.Response = {
           os.write(str.getBytes)
@@ -373,8 +373,9 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
           context
         )
 
-        val expectedJsonOutput = parser.parse(
-          s"""{
+        val expectedJsonOutput = parser
+          .parse(
+            s"""{
              |   "Status" : "SUCCESS",
              |   "RequestId" : "unique id for this create request",
              |   "LogicalResourceId" : "name of resource in template",
@@ -389,7 +390,75 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
              |   }
              |}
              |""".stripMargin
-        ).right.get
+          )
+          .right
+          .get
+
+        val actualJsonOutput = parser.parse(outputStream.toString).right.get
+
+        assert(actualJsonOutput == expectedJsonOutput)
+      }
+
+      "handles handler throwing an exception" - {
+
+        object Resource extends CustomResourceProvider[ResProp, ResProp] {
+
+          override def handler(request: Request, context: Context): Response =
+            throw new Throwable("Handler did a bad, bad thing")
+        }
+
+        val inputString =
+          """{
+            |   "RequestType" : "Create",
+            |   "RequestId" : "unique id for this create request",
+            |   "ResponseURL" : "pre-signed-url-for-create-response",
+            |   "ResourceType" : "Custom::MyCustomResourceType",
+            |   "LogicalResourceId" : "name of resource in template",
+            |   "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
+            |   "ResourceProperties" : {
+            |      "key1" : "string",
+            |      "key2" : [ "list" ],
+            |      "key3" : { "key4" : "map" }
+            |   }
+            |}
+            |""".stripMargin
+
+        val inputStream  = streamFromString(inputString)
+        val outputStream = new ByteArrayOutputStream()
+        val context      = makeContext()
+
+        def writeToOutputStream(os: OutputStream, str: String): requests.Response = {
+          os.write(str.getBytes)
+          os.close()
+
+          requests.Response("", 200, "", Map.empty, new requests.ResponseBlob("".getBytes), None)
+        }
+
+        CustomResourceProvider.handler(
+          Resource.handler,
+          (_, data) => writeToOutputStream(outputStream, data)
+        )(
+          Resource.baseLogger
+        )(
+          inputStream,
+          outputStream,
+          context
+        )
+
+        val expectedJsonOutput = parser
+          .parse(
+            s"""{
+             |   "Status" : "FAILED",
+             |   "RequestId" : "unique id for this create request",
+             |   "LogicalResourceId" : "name of resource in template",
+             |   "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
+             |   "PhysicalResourceId" : "",
+             |   "Reason" : "Handler did a bad, bad thing"
+             |}
+             |""".stripMargin
+          )
+          .right
+          .get
 
         val actualJsonOutput = parser.parse(outputStream.toString).right.get
 
