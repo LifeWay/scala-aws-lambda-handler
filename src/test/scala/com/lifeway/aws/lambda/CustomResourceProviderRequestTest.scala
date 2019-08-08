@@ -292,6 +292,28 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
         assert(response.asInstanceOf[Response].asJson == json)
       }
 
+      "Success - drop null values" - {
+
+        val response = Success(
+          requestID = "unique id for this update request",
+          logicalResourceID = "name of resource in template",
+          stackID = "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
+          physicalResourceID = "custom resource provider-defined physical id",
+          noEcho = true,
+          reason = None,
+          data = None
+        )
+
+        val json = Json.obj(
+          "Status"             -> "SUCCESS".asJson,
+          "RequestId"          -> response.requestID.asJson,
+          "LogicalResourceId"  -> response.logicalResourceID.asJson,
+          "StackId"            -> response.stackID.asJson,
+          "PhysicalResourceId" -> response.physicalResourceID.asJson,
+          "NoEcho"             -> response.noEcho.asJson
+        )
+      }
+
       "Failure" - {
 
         val response = Failure(
@@ -520,7 +542,6 @@ object CustomResourceProviderRequestTest extends TestSuite with LambdaTestUtils 
              |   "StackId" : "arn:aws:cloudformation:us-east-2:namespace:stack/stack-name/guid",
              |   "PhysicalResourceId" : "${context.getLogStreamName}",
              |   "NoEcho" : false,
-             |   "Reason" : null,
              |   "Data" : {
              |      "key1" : "string",
              |      "key2" : [ "list" ],
