@@ -54,6 +54,9 @@ abstract class CustomResourceProvider[Input, Output](
 
 object CustomResourceProvider {
 
+  val spaces4 = Printer.spaces4.copy(dropNullValues = true)
+  val noSpaces = Printer.noSpaces.copy(dropNullValues = true)
+
   def handler(
       handler: (Request, Context) => Response,
       putRequest: (String, String) => requests.Response
@@ -83,8 +86,9 @@ object CustomResourceProvider {
             identity
           )
 
-          val outputString = output.asJson.noSpaces
-          baseLogger.info(s"Lambda Custom Resource Output: ${output.asJson.spaces4}")
+          val outputString = output.asJson.pretty(noSpaces)
+
+          baseLogger.info(s"Lambda Custom Resource Output: ${output.asJson.pretty(spaces4)}")
 
           val response = putRequest(
             input.responseUrl,
