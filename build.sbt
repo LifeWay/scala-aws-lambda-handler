@@ -3,7 +3,7 @@ organization := "com.lifeway.aws"
 
 scalaVersion := "2.12.8"
 
-val circeVersion = "0.11.1"
+val circeVersion = "0.12.3"
 val slf4jVersion = "1.7.26"
 
 libraryDependencies ++= Seq(
