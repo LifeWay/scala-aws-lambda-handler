@@ -1,5 +1,6 @@
 package com.lifeway.aws.lambda
 
+import com.lifeway.aws.lambda.Errors
 import java.io.ByteArrayOutputStream
 
 import com.amazonaws.services.lambda.runtime.Context
