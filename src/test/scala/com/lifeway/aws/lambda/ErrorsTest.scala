@@ -1,5 +1,6 @@
 package com.lifeway.aws.lambda
 
+import com.lifeway.aws.lambda.Errors
 import io.circe._
 import io.circe.syntax._
 import utest._

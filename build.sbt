@@ -1,7 +1,8 @@
 name := "scala-lambda-handler"
 organization := "com.lifeway.aws"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
+crossScalaVersions := Seq("2.12.11", "2.13.1")
 
 val circeVersion = "0.12.3"
 val slf4jVersion = "1.7.26"
@@ -12,7 +13,7 @@ libraryDependencies ++= Seq(
   "org.slf4j"     % "slf4j-api"            % slf4jVersion,
   "com.amazonaws" % "aws-lambda-java-core" % "1.2.0",
   "com.lihaoyi"   %% "requests"            % "0.2.0",
-  "com.lihaoyi"   %% "utest"               % "0.6.3" % "test"
+  "com.lihaoyi"   %% "utest"               % "0.7.4" % "test"
 )
 
 testFrameworks += new TestFramework("utest.runner.Framework")

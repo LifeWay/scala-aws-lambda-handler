@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import io.circe
 import io.circe._
 import io.circe.parser._
+import com.lifeway.aws.lambda.Errors
 
 /**
   * Abstract Lambda Handler for Scala for API Gateway Proxied requests containing a JSON message body. You must extend
